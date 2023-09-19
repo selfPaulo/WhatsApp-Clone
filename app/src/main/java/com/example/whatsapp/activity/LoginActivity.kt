@@ -21,13 +21,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.whatsapp.R
 import com.example.whatsapp.ui.theme.*
 import com.example.whatsapp.R.drawable.*
 
 class LoginActivity : ComponentActivity() {
-    private var configuracaoFirebase: ConfiguracaoFirebase? = null
+    private val configuracaoFirebase = ConfiguracaoFirebase()
     private var autenticacao: FirebaseAuth? = null
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -65,7 +67,7 @@ class LoginActivity : ComponentActivity() {
         }
 
         fun validarAutenticacaoUsuario() {
-            autenticacao = configuracaoFirebase?.getFirebaseAutenticacao()
+            autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
             val email = usernameState.value
             val senha = passwordState.value
             val usuario = Usuario()
@@ -88,27 +90,29 @@ class LoginActivity : ComponentActivity() {
             }
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().background(Green80),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Image(
                     painter = painterResource(id = logo),
-                    contentDescription = "WhatsApp logo",
+                    contentDescription = stringResource(R.string.app_logo_description),
                     modifier = Modifier.padding(16.dp)
                 )
 
                 TextField(
                     value = usernameState.value,
                     onValueChange = { usernameState.value = it },
-                    label = { Text("E-mail") },
+                    label = { Text(stringResource(R.string.digite_seu_email)) },
                     modifier = Modifier.padding(16.dp)
                 )
 
                 TextField(
                     value = passwordState.value,
                     onValueChange = { passwordState.value = it },
-                    label = { Text("Senha") },
+                    label = { Text(stringResource(R.string.digite_sua_senha)) },
                     modifier = Modifier.padding(16.dp),
                     //keyboardType = KeyboardType.Password
                 )
@@ -117,39 +121,44 @@ class LoginActivity : ComponentActivity() {
                     onClick = {
                         validarAutenticacaoUsuario()
                     },
-                    colors = ButtonDefaults.buttonColors(Accent80),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.onPrimary),
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Text("Logar", color = Color.Black)
+                    Text(stringResource(R.string.logar), color = Color.Black)
                 }
 
                 Button(
                     onClick = {
                         abrirTelaCadastro()
                     },
-                    colors = ButtonDefaults.buttonColors(Accent80),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.onPrimary),
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Text("Não tem conta?",  color = Color.Black)
+                    Text(stringResource(R.string.nao_tem_conta),  color = Color.Black)
                 }
             }
         }
     }
 
-    private fun Image(imageVector: Int, contentDescription: String, modifier: Modifier) {
-
-    }
-
     @Preview(showBackground = true)
     @Composable
     fun Login() {
-        LoginScreen()
+        WhatsAppTheme {
+            LoginScreen()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            LoginScreen()
+            WhatsAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    LoginScreen()
+                }
+            }
         }
     }
     override fun onStart() {
@@ -160,13 +169,15 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
-    fun abrirTelaCadastro() {
-        val intent = Intent(this, CadastroActivity::class.java)
-        startActivity(intent)
+    private fun abrirTelaCadastro() {
+        Intent(this, CadastroActivity::class.java).also {
+            startActivity(it)
+        }
     }
 
-    fun abrirTelaPrincipal() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
+    private fun abrirTelaPrincipal() {
+        Intent(this, MainActivity::class.java).also {
+            startActivity(it)
+        }
     }
 }

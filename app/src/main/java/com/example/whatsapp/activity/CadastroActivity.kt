@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
@@ -21,15 +22,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.whatsapp.R
+import com.example.whatsapp.helper.Base64Custom
 import com.example.whatsapp.ui.theme.*
 
 class CadastroActivity : ComponentActivity() {
 
-    private var configuracaoFirebase: ConfiguracaoFirebase? = null
+    private val configuracaoFirebase = ConfiguracaoFirebase()
     private var autenticacao: FirebaseAuth? = null
+        private val base64Custom = Base64Custom()
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +46,7 @@ class CadastroActivity : ComponentActivity() {
         val passwordState = remember { mutableStateOf("") }
 
         fun cadastrarUsuario(usuario: Usuario) {
-            autenticacao = configuracaoFirebase?.getFirebaseAutenticacao()
+            autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
             usuario.email?.let {
                 usuario.senha?.let { it1 ->
                     autenticacao?.createUserWithEmailAndPassword(
@@ -49,6 +55,15 @@ class CadastroActivity : ComponentActivity() {
                         if (task.isSuccessful) {
                             Toast.makeText(this, "Sucesso ao cadastrar usuário!", Toast.LENGTH_SHORT).show()
                             finish()
+
+                            try {
+                                val identificadorUsuario = base64Custom.codificarBase64(usuario.email!!)
+                                usuario.id = identificadorUsuario
+                                usuario.salvar()
+                            }catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+
                         } else {
                             val excecao: String
                             try {
@@ -97,49 +112,55 @@ class CadastroActivity : ComponentActivity() {
 
         Scaffold(
             topBar = {
+                TopAppBar(title = {})
             }
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().background(Green80),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.usuario),
-                    contentDescription = "Cadastro logo",
+                    contentDescription = stringResource(R.string.app_cadastro_description),
                     modifier = Modifier.padding(16.dp)
                 )
 
                 TextField(
                     value = usernameState.value,
                     onValueChange = { usernameState.value = it },
-                    label = { Text("Nome") },
+                    textStyle = TextStyle(color = MaterialTheme.colorScheme.secondary),
+                    label = { Text(stringResource(R.string.digite_seu_nome)) },
                     modifier = Modifier.padding(16.dp)
                 )
 
                 TextField(
                     value = useremailState.value,
                     onValueChange = { useremailState.value = it },
-                    label = { Text("E-mail") },
+                    textStyle = TextStyle(color = MaterialTheme.colorScheme.secondary),
+                    label = { Text(stringResource(R.string.digite_seu_email)) },
                     modifier = Modifier.padding(16.dp)
                 )
 
                 TextField(
                     value = passwordState.value,
                     onValueChange = { passwordState.value = it },
-                    label = { Text("Senha") },
+                    textStyle = TextStyle(color = MaterialTheme.colorScheme.secondary),
+                    label = { Text(stringResource(R.string.digite_sua_senha)) },
                     modifier = Modifier.padding(16.dp),
-                    //keyboardType = KeyboardType.Password
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                 )
 
                 Button(
                     onClick = {
                         validarCadastroUsuario()
                     },
-                    colors = ButtonDefaults.buttonColors(Accent80),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.onPrimary),
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Text("Cadastrar", color = Color.Black)
+                    Text(stringResource(R.string.cadastrar), color = Color.Black)
                 }
             }
         }
@@ -148,13 +169,22 @@ class CadastroActivity : ComponentActivity() {
     @Preview(showBackground = true)
     @Composable
     fun Cadastro() {
-        CadastroScreen()
+        WhatsAppTheme {
+            CadastroScreen()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CadastroScreen()
+            WhatsAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    CadastroScreen()
+                }
+            }
         }
     }
 }

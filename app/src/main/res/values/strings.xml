@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">WhatsApp</string>
-    <string name="title_activity_login" translatable="false">LoginActivity</string>
     <string name="nao_tem_conta" translatable="false">Não tem conta? Cadastre-se</string>
     <string name="logar" translatable="false">Logar</string>
     <string name="digite_seu_nome" translatable="false">Digite seu nome</string>
@@ -8,6 +7,8 @@
     <string name="digite_sua_senha" translatable="false">Digite a sua senha</string>
     <string name="app_logo_description" translatable="false">WhatsApp Logo</string>
     <string name="app_cadastro_description" translatable="false">Usuario Logo</string>
-    <string name="title_activity_cadastro" translatable="false">CadastroActivity</string>
     <string name="cadastrar" translatable="false">Cadastrar</string>
+    <string name="title_activity_cadastro" translatable="false">Cadastro</string>
+    <string name="title_activity_login" translatable="false">Login</string>
+    <string name="title_activity_configuracoes">Configurações</string>
 </resources>
