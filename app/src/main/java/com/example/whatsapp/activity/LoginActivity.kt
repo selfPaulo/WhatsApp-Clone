@@ -14,6 +14,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
@@ -22,22 +24,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.whatsapp.R
-import com.example.whatsapp.ui.theme.*
+import com.example.whatsapp.activity.ui.theme.*
 import com.example.whatsapp.R.drawable.*
+import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 
 class LoginActivity : ComponentActivity() {
     private val configuracaoFirebase = ConfiguracaoFirebase()
     private var autenticacao: FirebaseAuth? = null
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "PrivateResource")
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun LoginScreen() {
         val usernameState = remember { mutableStateOf("") }
         val passwordState = remember { mutableStateOf("") }
+        var passwordVisibility by remember { mutableStateOf(false) }
+
+        val icon = if (passwordVisibility)
+            painterResource(id = com.google.android.material.R.drawable.design_ic_visibility)
+        else
+            painterResource(id = com.google.android.material.R.drawable.design_ic_visibility_off)
 
         fun logarUsuario(usuario: Usuario) {
             usuario.email?.let {
@@ -85,10 +98,7 @@ class LoginActivity : ComponentActivity() {
             }
         }
 
-        Scaffold(
-            topBar = {
-            }
-        ) {
+        Scaffold {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -105,16 +115,42 @@ class LoginActivity : ComponentActivity() {
                 TextField(
                     value = usernameState.value,
                     onValueChange = { usernameState.value = it },
+                    modifier = Modifier.padding(16.dp),
+                    textStyle = TextStyle(color = MaterialTheme.colorScheme.secondary),
                     label = { Text(stringResource(R.string.digite_seu_email)) },
-                    modifier = Modifier.padding(16.dp)
+                    isError = false,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary
+                    ),
+                    shape = RoundedCornerShape(25.dp)
                 )
 
-                TextField(
+                OutlinedTextField(
                     value = passwordState.value,
                     onValueChange = { passwordState.value = it },
-                    label = { Text(stringResource(R.string.digite_sua_senha)) },
                     modifier = Modifier.padding(16.dp),
-                    //keyboardType = KeyboardType.Password
+                    textStyle = TextStyle(color = MaterialTheme.colorScheme.secondary),
+                    label = { Text(stringResource(R.string.digite_sua_senha)) },
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            passwordVisibility = !passwordVisibility
+                        }) {
+                            Icon(painter = icon, contentDescription = "Icone de visibilidade")
+                        }
+                    },
+                    isError = false,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    visualTransformation = if (passwordVisibility) VisualTransformation.None
+                    else PasswordVisualTransformation(),
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary
+                    ),
+                    shape = RoundedCornerShape(25.dp)
                 )
 
                 Button(

@@ -11,4 +11,5 @@
     <string name="title_activity_cadastro" translatable="false">Cadastro</string>
     <string name="title_activity_login" translatable="false">Login</string>
     <string name="title_activity_configuracoes">Configurações</string>
+    <string name="title_activity_contatos">Contatos</string>
 </resources>
