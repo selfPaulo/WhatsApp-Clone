@@ -4,16 +4,18 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
@@ -21,18 +23,23 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,7 +51,84 @@ import com.example.whatsapp.R
 class ContatosActivity : ComponentActivity() {
 
     private val names = listOf(
-        "Ana", "André", "Alice", "Bruno", "Beatriz", "Bernardo", "Carlos", "Camila", "Caio", "Daniel", "Débora", "Davi", "Eduardo", "Elisa", "Enzo", "Felipe", "Fernanda", "Fabiana", "Gustavo", "Gabriela", "Guilherme", "Henrique", "Helena", "Heitor", "Igor", "Isabela", "Ingrid", "João", "Julia", "José", "Kauan", "Karen", "Kátia", "Lucas", "Laura", "Leandro", "Maria", "Mateus", "Mariana", "Nícolas", "Natália", "Nicole", "Otávio", "Olivia", "Óscar", "Pedro", "Paula", "Paulo", "Quirino", "Quiteria", "Quésia", "Rafael", "Renata", "Rodrigo", "Samuel", "Sara", "Sérgio", "Thiago", "Tatiana", "Túlio", "Ubirajara", "Umbelina", "Uriel", "Victor", "Vitória", "Valentina", "Wellington", "Wanessa", "Washington", "Xavier", "Ximena", "Xande", "Yuri", "Yara", "Yasmine", "Zélio", "Zuleide", "Zara"
+        "Ana",
+        "André",
+        "Alice",
+        "Bruno",
+        "Beatriz",
+        "Bernardo",
+        "Carlos",
+        "Camila",
+        "Caio",
+        "Daniel",
+        "Débora",
+        "Davi",
+        "Eduardo",
+        "Elisa",
+        "Enzo",
+        "Felipe",
+        "Fernanda",
+        "Fabiana",
+        "Gustavo",
+        "Gabriela",
+        "Guilherme",
+        "Henrique",
+        "Helena",
+        "Heitor",
+        "Igor",
+        "Isabela",
+        "Ingrid",
+        "João",
+        "Julia",
+        "José",
+        "Kauan",
+        "Karen",
+        "Kátia",
+        "Lucas",
+        "Laura",
+        "Leandro",
+        "Maria",
+        "Mateus",
+        "Mariana",
+        "Nícolas",
+        "Natália",
+        "Nicole",
+        "Otávio",
+        "Olivia",
+        "Óscar",
+        "Pedro",
+        "Paula",
+        "Paulo",
+        "Quirino",
+        "Quiteria",
+        "Quésia",
+        "Rafael",
+        "Renata",
+        "Rodrigo",
+        "Samuel",
+        "Sara",
+        "Sérgio",
+        "Thiago",
+        "Tatiana",
+        "Túlio",
+        "Ubirajara",
+        "Umbelina",
+        "Uriel",
+        "Victor",
+        "Vitória",
+        "Valentina",
+        "Wellington",
+        "Wanessa",
+        "Washington",
+        "Xavier",
+        "Ximena",
+        "Xande",
+        "Yuri",
+        "Yara",
+        "Yasmine",
+        "Zélio",
+        "Zuleide",
+        "Zara"
     ).groupBy { it.first() }.toSortedMap()
 
     private val namesList = names.map {
@@ -54,26 +138,51 @@ class ContatosActivity : ComponentActivity() {
         )
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            WhatsAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    ContatosScreen()
+                }
+            }
+        }
+    }
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ContatosScreen() {
-        Scaffold (
+        Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            stringResource(R.string.title_activity_contatos),
-                            color = MaterialTheme.colorScheme.secondary
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    stringResource(R.string.title_activity_contatos),
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            },
+                            supportingContent = { Text(text = "$countContacts contatos") },
                         )
                     },
-                    colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
+                    colors = TopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        actionIconContentColor = Color.Transparent,
+                        navigationIconContentColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                        titleContentColor = Color.Transparent
+                    ),
                     navigationIcon = {
                         IconButton(
                             onClick = { voltarTelaInicial() }
                         ) {
                             Icon(
-                                Icons.Default.ArrowBack,
+                                Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "ArrowBack",
                                 tint = MaterialTheme.colorScheme.secondary
                             )
@@ -175,19 +284,6 @@ class ContatosActivity : ComponentActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            WhatsAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    ContatosScreen()
-                }
-            }
-        }
-    }
 }
 
 data class Category(
@@ -195,41 +291,62 @@ data class Category(
     val items: List<String>
 )
 
-@Composable
-private fun CategoryHeader(
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    Text(
-        text = text,
-        fontSize = 16.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary)
-            .padding(16.dp)
-
-    )
-}
+//@Composable
+//private fun CategoryHeader(
+//    text: String,
+//    modifier: Modifier = Modifier
+//) {
+//    Text(
+//        text = text,
+//        fontSize = 16.sp,
+//        fontWeight = FontWeight.Bold,
+//        modifier = modifier
+//            .fillMaxWidth()
+//            .background(MaterialTheme.colorScheme.primary)
+//            .padding(16.dp)
+//
+//    )
+//}
 
 @Composable
 private fun CategoryItem(
     text: String,
     modifier: Modifier = Modifier
 ) {
-    Text(
-        text = text,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
+    ListItem(
+        headlineContent = {
+            Text(
+                text = text,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        },
         modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-
+            .fillMaxWidth(),
+        supportingContent = {
+            Text(
+                text = "Recado de $text",
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        leadingContent = {
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_background),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(25.dp)
+                    .clip(CircleShape)
+            )
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.background
+        )
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+private var countContacts = 0
+
 @Composable
 private fun CategorizedLazycolum(
     categories: List<Category>,
@@ -237,11 +354,9 @@ private fun CategorizedLazycolum(
 ) {
     LazyColumn(modifier) {
         categories.forEach { category ->
-            stickyHeader {
-                CategoryHeader(text = (category.name))
-            }
-            items(category.items) {text ->
+            items(category.items) { text ->
                 CategoryItem(text = text)
+                countContacts += 1
             }
         }
     }

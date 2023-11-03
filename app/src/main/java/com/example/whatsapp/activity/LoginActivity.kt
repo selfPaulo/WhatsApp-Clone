@@ -10,7 +10,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import com.example.whatsapp.config.ConfiguracaoFirebase
 import com.example.whatsapp.model.Usuario
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import androidx.compose.foundation.layout.*
@@ -31,16 +30,28 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.whatsapp.R
-import com.example.whatsapp.activity.ui.theme.*
 import com.example.whatsapp.R.drawable.*
 import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 
 class LoginActivity : ComponentActivity() {
     private val configuracaoFirebase = ConfiguracaoFirebase()
-    private var autenticacao: FirebaseAuth? = null
+    private var autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            WhatsAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    LoginScreen()
+                }
+            }
+        }
+    }
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "PrivateResource")
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun LoginScreen() {
         val usernameState = remember { mutableStateOf("") }
@@ -55,9 +66,9 @@ class LoginActivity : ComponentActivity() {
         fun logarUsuario(usuario: Usuario) {
             usuario.email?.let {
                 usuario.senha?.let { it1 ->
-                    autenticacao?.signInWithEmailAndPassword(
+                    autenticacao.signInWithEmailAndPassword(
                         it, it1
-                    )?.addOnCompleteListener(this) { task ->
+                    ).addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
                             abrirTelaPrincipal()
                         } else {
@@ -120,10 +131,10 @@ class LoginActivity : ComponentActivity() {
                     label = { Text(stringResource(R.string.digite_seu_email)) },
                     isError = false,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    colors = TextFieldDefaults.textFieldColors(
+                    colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedLabelColor = MaterialTheme.colorScheme.secondary
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary,
                     ),
                     shape = RoundedCornerShape(25.dp)
                 )
@@ -145,10 +156,10 @@ class LoginActivity : ComponentActivity() {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = if (passwordVisibility) VisualTransformation.None
                     else PasswordVisualTransformation(),
-                    colors = TextFieldDefaults.textFieldColors(
+                    colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedLabelColor = MaterialTheme.colorScheme.secondary
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary,
                     ),
                     shape = RoundedCornerShape(25.dp)
                 )
@@ -157,17 +168,17 @@ class LoginActivity : ComponentActivity() {
                     onClick = {
                         validarAutenticacaoUsuario()
                     },
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.onPrimary),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(stringResource(R.string.logar), color = Color.Black)
                 }
 
-                Button(
+                TextButton(
                     onClick = {
                         abrirTelaCadastro()
                     },
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.onPrimary),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(stringResource(R.string.nao_tem_conta),  color = Color.Black)
@@ -184,26 +195,14 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            WhatsAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    LoginScreen()
-                }
-            }
-        }
-    }
     override fun onStart() {
         super.onStart()
-        val usuarioAtual = autenticacao?.currentUser
+        val usuarioAtual = autenticacao.currentUser
         if (usuarioAtual != null) {
             abrirTelaPrincipal()
-        }
+        } 
     }
+
 
     private fun abrirTelaCadastro() {
         Intent(this, CadastroActivity::class.java).also {

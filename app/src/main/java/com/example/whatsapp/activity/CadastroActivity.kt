@@ -9,7 +9,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import com.example.whatsapp.config.ConfiguracaoFirebase
 import com.example.whatsapp.model.Usuario
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
@@ -33,16 +32,28 @@ import androidx.compose.ui.unit.dp
 import com.example.whatsapp.R
 import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 import com.example.whatsapp.helper.Base64Custom
-import com.example.whatsapp.activity.ui.theme.*
 
 class CadastroActivity : ComponentActivity() {
 
     private val configuracaoFirebase = ConfiguracaoFirebase()
-    private var autenticacao: FirebaseAuth? = null
+    private var autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
     private val base64Custom = Base64Custom()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            WhatsAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    CadastroScreen()
+                }
+            }
+        }
+    }
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "PrivateResource")
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun CadastroScreen() {
         val usernameState = remember { mutableStateOf("") }
@@ -59,9 +70,9 @@ class CadastroActivity : ComponentActivity() {
             autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
             usuario.email?.let {
                 usuario.senha?.let { it1 ->
-                    autenticacao?.createUserWithEmailAndPassword(
+                    autenticacao.createUserWithEmailAndPassword(
                         it, it1
-                    )?.addOnCompleteListener(this) { task ->
+                    ).addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
                             Toast.makeText(this, "Sucesso ao cadastrar usuário!", Toast.LENGTH_SHORT).show()
                             finish()
@@ -141,10 +152,10 @@ class CadastroActivity : ComponentActivity() {
                     label = { Text(stringResource(R.string.digite_seu_nome)) },
                     isError = false,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    colors = TextFieldDefaults.textFieldColors(
+                    colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedLabelColor = MaterialTheme.colorScheme.secondary
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary,
                     ),
                     shape = RoundedCornerShape(25.dp)
                 )
@@ -157,10 +168,10 @@ class CadastroActivity : ComponentActivity() {
                     label = { Text(stringResource(R.string.digite_seu_email)) },
                     isError = false,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    colors = TextFieldDefaults.textFieldColors(
+                    colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedLabelColor = MaterialTheme.colorScheme.secondary
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary,
                     ),
                     shape = RoundedCornerShape(25.dp)
                 )
@@ -182,10 +193,10 @@ class CadastroActivity : ComponentActivity() {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = if (passwordVisibility) VisualTransformation.None
                             else PasswordVisualTransformation(),
-                    colors = TextFieldDefaults.textFieldColors(
+                    colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedLabelColor = MaterialTheme.colorScheme.secondary
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary,
                     ),
                     shape = RoundedCornerShape(25.dp)
                 )
@@ -194,7 +205,7 @@ class CadastroActivity : ComponentActivity() {
                     onClick = {
                         validarCadastroUsuario()
                     },
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.onPrimary),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(stringResource(R.string.cadastrar), color = Color.Black)
@@ -211,17 +222,4 @@ class CadastroActivity : ComponentActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            WhatsAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    CadastroScreen()
-                }
-            }
-        }
-    }
 }

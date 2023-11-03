@@ -4,7 +4,7 @@ import android.util.Base64
 
 class Base64Custom {
 
-    val regex = Regex("(\\n|\\r)")
+    private val regex = Regex("(\\n|\\r)")
 
     fun codificarBase64(texto: String) : String {
         return Base64.encodeToString(texto.toByteArray(), Base64.DEFAULT).replace(regex = regex, replacement = "")

@@ -12,4 +12,5 @@
     <string name="title_activity_login" translatable="false">Login</string>
     <string name="title_activity_configuracoes">Configurações</string>
     <string name="title_activity_contatos">Contatos</string>
+    <string name="title_activity_perfil">Perfil</string>
 </resources>

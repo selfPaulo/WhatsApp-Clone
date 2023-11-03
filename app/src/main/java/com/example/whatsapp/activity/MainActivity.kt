@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,30 +34,70 @@ import androidx.compose.ui.unit.dp
 import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.AddIcCall
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Chat
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.example.whatsapp.R
 import com.example.whatsapp.config.ConfiguracaoFirebase
-import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
     private val configuracaoFirebase = ConfiguracaoFirebase()
-    private var autenticacao: FirebaseAuth? = null
+    private var autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
+
+    private val contatos = listOf(
+        "Teste 1", "Teste 2", "Teste 3"
+    ).groupBy { it.first() }.toSortedMap()
+
+    private var contatosList = contatos.map {
+        Contatos(
+            name = it.key.toString(),
+            items = it.value
+        )
+    }
+
+    //private var statusList = listOf<String>()
+
+    private var chamadasList = listOf<String>()
 
     data class TabItem(
         val title: String
     )
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            WhatsAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainScreen()
+                }
+            }
+        }
+    }
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -66,7 +107,7 @@ class MainActivity : ComponentActivity() {
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.app_name), color = MaterialTheme.colorScheme.secondary) },
-                    colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
                     actions = {
                         IconButton(
                             onClick = { /* Do something */ },
@@ -204,11 +245,12 @@ class MainActivity : ComponentActivity() {
                 )
             )
             var selectedTabIndex by remember {
-                mutableStateOf(0)
+                mutableIntStateOf(0)
             }
             val pagerState = rememberPagerState {
                 tabItens.size
             }
+            var colorSelected: Color
             LaunchedEffect(selectedTabIndex) {
                 pagerState.animateScrollToPage(selectedTabIndex)
             }
@@ -223,6 +265,7 @@ class MainActivity : ComponentActivity() {
                     .padding(top = 64.dp)
             ) {
                 TabRow(selectedTabIndex = selectedTabIndex) {
+                    colorSelected =  MaterialTheme.colorScheme.tertiary
                     tabItens.forEachIndexed { index, item ->
                         Tab(
                             selected = index == selectedTabIndex,
@@ -230,7 +273,7 @@ class MainActivity : ComponentActivity() {
                                 selectedTabIndex = index
                             },
                             text = {
-                                Text(text = item.title, color = MaterialTheme.colorScheme.secondary)
+                                Text(text = item.title, color = colorSelected)
                             }
                         )
                     }
@@ -243,9 +286,26 @@ class MainActivity : ComponentActivity() {
                 ) { index ->
                     Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+//                        contentAlignment = Alignment.Center
                     ) {
-                        Text(text = tabItens[index].title)
+                        if (index == 0) {
+                            if (contatosList.isEmpty()) {
+                                Text(
+                                    text = tabItens[index].title,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            } else {
+                                ConversasLazycolum(contatos = contatosList)
+                            }
+                        } else if (index == 2) {
+                            if (chamadasList.isEmpty()) {
+                                TelaChamadasEmpty()
+                            }
+                        } else {
+                            Text(
+                                text = tabItens[index].title
+                            )
+                        }
                     }
                 }
             }
@@ -253,11 +313,12 @@ class MainActivity : ComponentActivity() {
         Box(modifier = Modifier.fillMaxSize()) {
             FloatingActionButton(
                 onClick = {
+                    abrirTelaContatos()
                 },
                 modifier = Modifier
                     .padding(all = 16.dp)
                     .align(alignment = Alignment.BottomEnd),
-                containerColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
                     Icons.Outlined.Chat,
@@ -268,17 +329,67 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Composable
+    private fun TelaChamadasEmpty() {
+        ListItem(
+            headlineContent = {
+            Text(
+                text = "Criar link de chamada",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        },
+            supportingContent = {
+                Text(
+                    text = "Compartilhe um link para sua chamada do WhatsApp",
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            },
+        )
+        Box (
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Para fazer chamadas com seus contatos que usam o WhatsApp, toque em "
+                        + Icons.Default.AddIcCall.toString() + " no fina da tela",
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        }
+    }
+
     private fun abrirTelaConfiguracoes() {
         Intent(this, ConfiguracoesActivity::class.java).also {
             startActivity(it)
         }
     }
 
+    private fun abrirTelaContatos() {
+        Intent(this, ContatosActivity::class.java).also {
+            startActivity(it)
+        }
+    }
+
     private fun deslogarUsuario() {
         try {
-            autenticacao?.signOut()
+            autenticacao.signOut()
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val usuarioAtual = autenticacao.currentUser
+        if (usuarioAtual == null) {
+            abrirTelaLogin()
+        }
+    }
+
+    private fun abrirTelaLogin() {
+        Intent(this, LoginActivity::class.java).also {
+            startActivity(it)
         }
     }
 
@@ -289,17 +400,62 @@ class MainActivity : ComponentActivity() {
             MainScreen()
         }
     }
+}
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            WhatsAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainScreen()
-                }
+data class Contatos(
+    val name: String,
+    val items: List<String>
+)
+
+@Composable
+private fun ConversaItem(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = text,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        },
+        modifier = modifier
+            .fillMaxWidth(),
+        supportingContent = {
+            Text(
+                text = "Ultima msg de $text",
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        leadingContent = {
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_background),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(25.dp)
+                    .clip(CircleShape)
+            )
+        },
+        trailingContent = {
+            Text(text = "00:00")
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.background
+        )
+    )
+}
+
+@Composable
+private fun ConversasLazycolum(
+    contatos: List<Contatos>,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(modifier) {
+        contatos.forEach { category ->
+            items(category.items) { text ->
+                ConversaItem(text = text)
             }
         }
     }

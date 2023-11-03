@@ -1,34 +1,31 @@
 package com.example.whatsapp.activity
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.app.Activity
 import android.content.Intent
-import android.provider.Settings
-import android.net.Uri
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-//import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -36,105 +33,40 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.whatsapp.R
 import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
-import com.example.whatsapp.helper.CameraPermissionTextProvider
-import com.example.whatsapp.helper.MainViewModel
-import com.example.whatsapp.helper.PermissionDialog
-import com.example.whatsapp.helper.PhoneCallPermissionTextProvider
-import com.example.whatsapp.helper.RecordAudioPermissionTextProvider
-
-fun Activity.openAppSettings() {
-    Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.fromParts("package", packageName, null)
-    ).also(::startActivity)
-}
 
 class ConfiguracoesActivity : ComponentActivity() {
 
-    private val permissionsToRequest = arrayOf(
-        Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.CALL_PHONE,
-        Manifest.permission.READ_EXTERNAL_STORAGE,
-        Manifest.permission.READ_CONTACTS
-    )
+    private val titulosConfiguracoesString = listOf(
+        "Conta", "Privacidade", "Avatar",
+        "Conversas", "Notificações", "Armazenamento e dados",
+        "Idioma do aplicativo", "Ajuda", "Convidar amigos"
+    ).groupBy { it.chars() }
+
+    private val titulosConfiguracoes = titulosConfiguracoesString.map {
+        Configuracoes(
+            name = it.key.toString(),
+            items = it.value
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             WhatsAppTheme {
-                val viewModel = viewModel<MainViewModel>()
-                val dialogQueue = viewModel.visiblePermissionDialogQueue
-
-                val cameraPermissionResultLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission(),
-                    onResult = { isGranted ->
-                        viewModel.onPermissionResult(
-                            permission = Manifest.permission.CAMERA,
-                            isGranted = isGranted
-                        )
-                    }
-                )
-
-                val multiplePermissionResultLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestMultiplePermissions(),
-                    onResult = { perms ->
-                        permissionsToRequest.forEach { permission ->
-                            viewModel.onPermissionResult(
-                                permission = permission,
-                                isGranted = perms[permission] == true
-                            )
-                        }
-                    }
-                )
-
-                dialogQueue
-                    .reversed()
-                    .forEach { permission ->
-                        PermissionDialog(
-                            permissionTextProvider = when (permission) {
-                                Manifest.permission.CAMERA -> {
-                                    CameraPermissionTextProvider()
-                                }
-
-                                Manifest.permission.RECORD_AUDIO -> {
-                                    RecordAudioPermissionTextProvider()
-                                }
-
-                                Manifest.permission.CALL_PHONE -> {
-                                    PhoneCallPermissionTextProvider()
-                                }
-
-                                else -> return@forEach
-                            },
-                            isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
-                                permission
-                            ),
-                            onDismiss = viewModel::dismissDialog,
-                            onOkClick = {
-                                viewModel.dismissDialog()
-                                multiplePermissionResultLauncher.launch(
-                                    arrayOf(permission)
-                                )
-                            }
-//                            onGoToAppSettingsClick = ::openAppSettings
-                        )
-                    }
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ConfiguracoesScreen(cameraPermissionResultLauncher)
+                    ConfiguracoesScreen()
                 }
             }
         }
@@ -143,7 +75,7 @@ class ConfiguracoesActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun ConfiguracoesScreen(cameraPermissionResultLauncher: ManagedActivityResultLauncher<String, Boolean>) {
+    fun ConfiguracoesScreen() {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -153,13 +85,13 @@ class ConfiguracoesActivity : ComponentActivity() {
                             color = MaterialTheme.colorScheme.secondary
                         )
                     },
-                    colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
                     navigationIcon = {
                         IconButton(
                             onClick = { voltarTelaInicial() }
                         ) {
                             Icon(
-                                Icons.Default.ArrowBack,
+                                Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "ArrowBack",
                                 tint = MaterialTheme.colorScheme.secondary
                             )
@@ -185,25 +117,9 @@ class ConfiguracoesActivity : ComponentActivity() {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-
-                Row(
-                    modifier = Modifier.padding(top = 54.dp),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.padrao),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(150.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                cameraPermissionResultLauncher.launch(
-                                    Manifest.permission.CAMERA
-                                )
-                            }
-                    )
-                }
+                ConfiguracoesLazycolum(
+                    configuracoes = titulosConfiguracoes
+                )
             }
         }
     }
@@ -212,23 +128,88 @@ class ConfiguracoesActivity : ComponentActivity() {
     @Composable
     fun Configuracoes() {
         WhatsAppTheme {
-            val viewModel = viewModel<MainViewModel>()
-            val cameraPermissionResultLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.RequestPermission(),
-                onResult = { isGranted ->
-                    viewModel.onPermissionResult(
-                        permission = Manifest.permission.CAMERA,
-                        isGranted = isGranted
-                    )
-                }
-            )
-            ConfiguracoesScreen(cameraPermissionResultLauncher)
+            ConfiguracoesScreen()
         }
     }
 
-
     private fun voltarTelaInicial() {
         finish()
+    }
+
+    private fun abrirTelaPerfil() {
+        Intent(this, PerfilActivity::class.java).also {
+            startActivity(it)
+        }
+    }
+
+    data class Configuracoes(
+        val name: String,
+        val items: List<String>
+    )
+
+    @Composable
+    private fun ConfiguracoesItem(
+        text: String,
+        modifier: Modifier = Modifier
+    ) {
+        Column {
+            ListItem(
+                modifier = modifier,
+                headlineContent = { Text(text = text, color = Color.White) },
+                supportingContent = { Text(text = "Teste") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = ""
+                    )
+                },
+                colors = ListItemDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
+    }
+
+    @Composable
+    private fun ConfiguracoesLazycolum(
+        configuracoes: List<Configuracoes>,
+        modifier: Modifier = Modifier
+    ) {
+        Box (
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    abrirTelaPerfil()
+                }
+        ) {
+            ListItem(
+                headlineContent = { Text(text = "Teste Nome", color = Color.White) },
+                modifier = modifier.padding(top = 56.dp),
+                supportingContent = { Text(text = "Teste Recado") },
+                leadingContent = {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_launcher_background),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                    )
+                },
+                trailingContent = {
+                  Icon(imageVector = Icons.Outlined.Android, contentDescription = null)
+                },
+                colors = ListItemDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
+        LazyColumn(modifier) {
+            configuracoes.forEach { item ->
+                items(item.items) { text ->
+                    ConfiguracoesItem(text = text)
+                }
+            }
+        }
     }
 
 }
