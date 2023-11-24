@@ -4,20 +4,26 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,28 +55,34 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.canhub.cropper.CropImage.CancelledResult.uriContent
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import com.example.whatsapp.R
 import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 import com.example.whatsapp.config.ConfiguracaoFirebase
-import com.example.whatsapp.helper.Base64Custom
+import com.example.whatsapp.helper.AccessMediaLocationPermissionTextProvider
 import com.example.whatsapp.helper.CameraPermissionTextProvider
 import com.example.whatsapp.helper.MainViewModel
 import com.example.whatsapp.helper.PermissionDialog
 import com.example.whatsapp.helper.PhoneCallPermissionTextProvider
-import com.example.whatsapp.helper.ReadExternalStoragePermissionTextProvider
 import com.example.whatsapp.helper.RecordAudioPermissionTextProvider
-import com.example.whatsapp.model.Usuario
 
 @SuppressLint("QueryPermissionsNeeded")
 fun Activity.openAppSettings() {
@@ -145,7 +157,7 @@ class PerfilActivity : ComponentActivity() {
                                 }
 
                                 Manifest.permission.ACCESS_MEDIA_LOCATION -> {
-                                    ReadExternalStoragePermissionTextProvider()
+                                    AccessMediaLocationPermissionTextProvider()
                                 }
 
                                 Manifest.permission.RECORD_AUDIO -> {
@@ -176,7 +188,10 @@ class PerfilActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PerfilScreen(cameraPermissionResultLauncher, readExternalStoragePermissionResultLauncher)
+                    PerfilScreen(
+                        cameraPermissionResultLauncher,
+                        readExternalStoragePermissionResultLauncher
+                    )
                 }
             }
         }
@@ -192,9 +207,38 @@ class PerfilActivity : ComponentActivity() {
     @Composable
     fun PerfilScreen(
         cameraPermissionResultLauncher: ManagedActivityResultLauncher<String, Boolean>,
-        readExternalStorageermissionResultLauncher: ManagedActivityResultLauncher<String, Boolean>
+        accessMediaLocationPermissionResultLauncher: ManagedActivityResultLauncher<String, Boolean>
     ) {
-        var openBottomSheet by rememberSaveable { mutableStateOf(true) }
+        var openBottomSheet by rememberSaveable { mutableStateOf(false) }
+
+        val context = LocalContext.current
+        var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+        var imageUri0 by remember { mutableStateOf<Uri?>(null) }
+        val imageCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+            if (result.isSuccessful) {
+                imageUri0 = result.uriContent
+            }
+        }
+        if (imageUri0 != null) {
+            bitmap = if (Build.VERSION.SDK_INT < 28) {
+                MediaStore.Images.Media.getBitmap(context.contentResolver, imageUri0)
+            } else {
+                val source = ImageDecoder.createSource(context.contentResolver, imageUri0!!)
+                ImageDecoder.decodeBitmap(source)
+            }
+        }
+
+        var imageUri: Any? by remember { mutableStateOf(R.drawable.no_picture) }
+        val photoPicker = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickVisualMedia()
+        ) {
+            if (it != null) {
+                Log.d("PhotoPicker", "Selected URI: $it")
+                imageUri = it
+            } else {
+                Log.d("PhotoPicker", "No media selected")
+            }
+        }
 
         Scaffold(
             topBar = {
@@ -227,33 +271,60 @@ class PerfilActivity : ComponentActivity() {
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(top = 60.dp)
+                        .padding(top = 64.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_background),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(200.dp)
-                            .clip(CircleShape)
-                    )
-                    IconButton(
-                        onClick = {
-                            openBottomSheet != openBottomSheet
-                        },
-                        modifier = Modifier.background(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = CircleShape
+                    Box {
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap?.asImageBitmap()!!,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(Color.Blue)
+                                    .size(200.dp)
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = R.drawable.no_picture),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(Color.Gray)
+                                    .size(200.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                openBottomSheet = !openBottomSheet
+                            },
+                            modifier = Modifier
+                                .padding(all = 16.dp)
+                                .align(alignment = Alignment.BottomEnd)
+                                .background(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape
+                            )
                         )
-                    )
-                    {
-                        Icon(
-                            Icons.Outlined.CameraAlt,
-                            contentDescription = "Camera",
-                            tint = Color.Black
-                        )
+                        {
+                            Image(
+                                painter = painterResource(id = R.drawable.camera),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .size(50.dp)
+                                    .padding(10.dp)
+                                    .clickable {
+                                        val cropOption =
+                                            CropImageContractOptions(uriContent, CropImageOptions())
+                                        imageCropLauncher.launch(cropOption)
+                                    }
+                            )
+                        }
                     }
                 }
                 Row(
@@ -263,7 +334,7 @@ class PerfilActivity : ComponentActivity() {
                     verticalAlignment = Alignment.Bottom
                 ) {
                     ListItem(
-                        headlineContent = { Text(text = "", color = Color.White) },
+                        headlineContent = { Text(text = "Nome", color = Color.White) },
                         supportingContent = { Text(text = "Teste") },
                         leadingContent = {
                             Icon(
@@ -342,13 +413,17 @@ class PerfilActivity : ComponentActivity() {
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    Text("Foto do perfil", color = Color.White, fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+                    Text(
+                        "Foto do perfil",
+                        color = Color.White,
+                        fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
-                        Column (
+                        Column(
                             modifier = Modifier.padding(end = 25.dp)
                         ) {
                             IconButton(onClick = {
@@ -356,27 +431,56 @@ class PerfilActivity : ComponentActivity() {
                                     Manifest.permission.CAMERA
                                 )
                             }) {
-                                Icon(imageVector = Icons.Outlined.CameraAlt, contentDescription = null, tint = Color.White)
+                                Icon(
+                                    imageVector = Icons.Outlined.CameraAlt,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
                             }
-                            Text(text = "Câmera", color = Color.White, fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+                            Text(
+                                text = "Câmera",
+                                color = Color.White,
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            )
                         }
-                        Column (
+                        Column(
                             modifier = Modifier.padding(end = 25.dp)
                         ) {
                             IconButton(onClick = {
-                                readExternalStorageermissionResultLauncher.launch(
-                                    Manifest.permission.ACCESS_MEDIA_LOCATION
+                                photoPicker.launch(
+                                    PickVisualMediaRequest(
+                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                    )
                                 )
+//                                accessMediaLocationPermissionResultLauncher.launch(
+//                                    Manifest.permission.ACCESS_MEDIA_LOCATION
+//                                )
                             }) {
-                                Icon(imageVector = Icons.Outlined.Image, contentDescription = null, tint = Color.White)
+                                Icon(
+                                    imageVector = Icons.Outlined.Image,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
                             }
-                            Text(text = "Galeria", color = Color.White, fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+                            Text(
+                                text = "Galeria",
+                                color = Color.White,
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            )
                         }
                         Column {
                             IconButton(onClick = { /*TODO*/ }) {
-                                Icon(imageVector = Icons.Outlined.Person, contentDescription = null, tint = Color.White)
+                                Icon(
+                                    imageVector = Icons.Outlined.Person,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
                             }
-                            Text(text = "Avatar", color = Color.White, fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+                            Text(
+                                text = "Avatar",
+                                color = Color.White,
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            )
                         }
                     }
                 }
@@ -400,7 +504,7 @@ class PerfilActivity : ComponentActivity() {
                     )
                 }
             )
-            val readExternalStoragePermissionResultLauncher = rememberLauncherForActivityResult(
+            val accessMediaLocationPermissionResultLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission(),
                 onResult = { isGranted ->
                     viewModel.onPermissionResult(
@@ -409,7 +513,10 @@ class PerfilActivity : ComponentActivity() {
                     )
                 }
             )
-            PerfilScreen(cameraPermissionResultLauncher, readExternalStoragePermissionResultLauncher)
+            PerfilScreen(
+                cameraPermissionResultLauncher,
+                accessMediaLocationPermissionResultLauncher
+            )
         }
     }
 }

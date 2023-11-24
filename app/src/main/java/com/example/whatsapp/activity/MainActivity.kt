@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,17 +33,11 @@ import androidx.compose.ui.unit.dp
 import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.AddIcCall
+import androidx.compose.material.icons.outlined.AddIcCall
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Chat
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.LaunchedEffect
@@ -53,12 +46,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import com.example.whatsapp.R
+import com.example.whatsapp.R.*
+import com.example.whatsapp.R.mipmap.*
 import com.example.whatsapp.config.ConfiguracaoFirebase
 
 class MainActivity : ComponentActivity() {
@@ -66,23 +56,9 @@ class MainActivity : ComponentActivity() {
     private val configuracaoFirebase = ConfiguracaoFirebase()
     private var autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
 
-    private val contatos = listOf(
-        "Teste 1", "Teste 2", "Teste 3"
-    ).groupBy { it.first() }.toSortedMap()
-
-    private var contatosList = contatos.map {
-        Contatos(
-            name = it.key.toString(),
-            items = it.value
-        )
-    }
-
-    //private var statusList = listOf<String>()
-
-    private var chamadasList = listOf<String>()
-
     data class TabItem(
-        val title: String
+        val title: String,
+        val index: Int
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,15 +79,25 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     @Composable
     fun MainScreen() {
+        var currentActionButton by remember {
+            mutableIntStateOf(0)
+        }
+        var currentIcon by remember {
+            mutableStateOf(Icons.Outlined.Chat)
+        }
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.app_name), color = MaterialTheme.colorScheme.secondary) },
+                    title = {
+                        Text(
+                            stringResource(string.app_name),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
                     actions = {
                         IconButton(
                             onClick = { /* Do something */ },
-                            modifier = Modifier.padding(start = 8.dp)
                         ) {
                             Icon(
                                 Icons.Outlined.CameraAlt,
@@ -121,7 +107,6 @@ class MainActivity : ComponentActivity() {
                         }
                         IconButton(
                             onClick = { /* Do something */ },
-                            modifier = Modifier.padding(start = 8.dp)
                         ) {
                             Icon(
                                 Icons.Default.Search,
@@ -132,7 +117,6 @@ class MainActivity : ComponentActivity() {
                         var expanded by remember { mutableStateOf(false) }
                         IconButton(
                             onClick = { expanded = true },
-                            modifier = Modifier.padding(start = 8.dp)
                         ) {
                             Icon(
                                 Icons.Default.MoreVert,
@@ -141,12 +125,10 @@ class MainActivity : ComponentActivity() {
                             )
                             DropdownMenu(
                                 expanded = expanded,
-                                modifier = Modifier.padding(top = 16.dp),
-                                onDismissRequest = { expanded = false }
+                                onDismissRequest = { expanded = false },
                             ) {
                                 DropdownMenuItem(
                                     onClick = { /* Do something */ },
-                                    modifier = Modifier.padding(start = 16.dp),
                                     text = {
                                         Text(
                                             text = "Novo Grupo",
@@ -156,7 +138,6 @@ class MainActivity : ComponentActivity() {
                                 )
                                 DropdownMenuItem(
                                     onClick = { /* Do something */ },
-                                    modifier = Modifier.padding(start = 16.dp),
                                     text = {
                                         Text(
                                             text = "Nova Transmissão",
@@ -166,7 +147,6 @@ class MainActivity : ComponentActivity() {
                                 )
                                 DropdownMenuItem(
                                     onClick = { /* Do something */ },
-                                    modifier = Modifier.padding(start = 16.dp),
                                     text = {
                                         Text(
                                             text = "Aparelhos Conectados",
@@ -176,7 +156,6 @@ class MainActivity : ComponentActivity() {
                                 )
                                 DropdownMenuItem(
                                     onClick = { /* Do something */ },
-                                    modifier = Modifier.padding(start = 16.dp),
                                     text = {
                                         Text(
                                             text = "Mensagens Favoritas",
@@ -186,7 +165,6 @@ class MainActivity : ComponentActivity() {
                                 )
                                 DropdownMenuItem(
                                     onClick = { /* Do something */ },
-                                    modifier = Modifier.padding(start = 16.dp),
                                     text = {
                                         Text(
                                             text = "Encontrar Empresas",
@@ -196,7 +174,6 @@ class MainActivity : ComponentActivity() {
                                 )
                                 DropdownMenuItem(
                                     onClick = { /* Do something */ },
-                                    modifier = Modifier.padding(start = 16.dp),
                                     text = {
                                         Text(
                                             text = "Pagamentos",
@@ -205,8 +182,10 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                                 DropdownMenuItem(
-                                    onClick = { abrirTelaConfiguracoes() },
-                                    modifier = Modifier.padding(start = 16.dp),
+                                    onClick = {
+                                        abrirTelaConfiguracoes()
+                                        expanded = false
+                                    },
                                     text = {
                                         Text(
                                             text = "Configurações",
@@ -219,7 +198,6 @@ class MainActivity : ComponentActivity() {
                                         deslogarUsuario()
                                         finish()
                                     },
-                                    modifier = Modifier.padding(start = 16.dp),
                                     text = {
                                         Text(
                                             text = "Sair",
@@ -235,13 +213,16 @@ class MainActivity : ComponentActivity() {
         ) {
             val tabItens = listOf(
                 TabItem(
-                    title = "Conversas"
+                    title = "Conversas",
+                    index = 0
                 ),
                 TabItem(
-                    title = "Atualizações"
+                    title = "Atualizações",
+                    index = 1
                 ),
                 TabItem(
-                    title = "Chamadas"
+                    title = "Chamadas",
+                    index = 2
                 )
             )
             var selectedTabIndex by remember {
@@ -265,8 +246,12 @@ class MainActivity : ComponentActivity() {
                     .padding(top = 64.dp)
             ) {
                 TabRow(selectedTabIndex = selectedTabIndex) {
-                    colorSelected =  MaterialTheme.colorScheme.tertiary
                     tabItens.forEachIndexed { index, item ->
+                        colorSelected = if (item.index == selectedTabIndex) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.tertiary
+                        }
                         Tab(
                             selected = index == selectedTabIndex,
                             onClick = {
@@ -286,25 +271,27 @@ class MainActivity : ComponentActivity() {
                 ) { index ->
                     Box(
                         modifier = Modifier.fillMaxSize(),
-//                        contentAlignment = Alignment.Center
                     ) {
-                        if (index == 0) {
-                            if (contatosList.isEmpty()) {
-                                Text(
-                                    text = tabItens[index].title,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            } else {
-                                ConversasLazycolum(contatos = contatosList)
+                        when (index) {
+                            0 -> {
+                                TelaConversas()
                             }
-                        } else if (index == 2) {
-                            if (chamadasList.isEmpty()) {
+                            1 -> {
+                                TelaAtualizacoes()
+                            }
+                            else -> {
                                 TelaChamadasEmpty()
                             }
-                        } else {
-                            Text(
-                                text = tabItens[index].title
-                            )
+                        }
+                        when (index) {
+                            0 -> currentActionButton = 0
+                            1 -> currentActionButton = 1
+                            2 -> currentActionButton = 2
+                        }
+                        when (index) {
+                            0 -> currentIcon = Icons.Outlined.Chat
+                            1 -> currentIcon = Icons.Outlined.CameraAlt
+                            2 -> currentIcon = Icons.Outlined.AddIcCall
                         }
                     }
                 }
@@ -313,7 +300,11 @@ class MainActivity : ComponentActivity() {
         Box(modifier = Modifier.fillMaxSize()) {
             FloatingActionButton(
                 onClick = {
-                    abrirTelaContatos()
+                    when (currentActionButton) {
+                        0 -> abrirTelaContatos()
+                        1 -> abrirTelaContatos()
+                        2 -> abrirTelaContatos()
+                    }
                 },
                 modifier = Modifier
                     .padding(all = 16.dp)
@@ -321,41 +312,11 @@ class MainActivity : ComponentActivity() {
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
-                    Icons.Outlined.Chat,
-                    contentDescription = "Contatos",
+                    currentIcon,
+                    contentDescription = "Nova Conversa / Camêra / Nova Ligação",
                     tint = Color.Black
                 )
             }
-        }
-    }
-
-    @Composable
-    private fun TelaChamadasEmpty() {
-        ListItem(
-            headlineContent = {
-            Text(
-                text = "Criar link de chamada",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary
-            )
-        },
-            supportingContent = {
-                Text(
-                    text = "Compartilhe um link para sua chamada do WhatsApp",
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            },
-        )
-        Box (
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Para fazer chamadas com seus contatos que usam o WhatsApp, toque em "
-                        + Icons.Default.AddIcCall.toString() + " no fina da tela",
-                color = MaterialTheme.colorScheme.tertiary
-            )
         }
     }
 
@@ -398,65 +359,6 @@ class MainActivity : ComponentActivity() {
     fun Main() {
         WhatsAppTheme {
             MainScreen()
-        }
-    }
-}
-
-data class Contatos(
-    val name: String,
-    val items: List<String>
-)
-
-@Composable
-private fun ConversaItem(
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    ListItem(
-        headlineContent = {
-            Text(
-                text = text,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary
-            )
-        },
-        modifier = modifier
-            .fillMaxWidth(),
-        supportingContent = {
-            Text(
-                text = "Ultima msg de $text",
-                color = MaterialTheme.colorScheme.tertiary
-            )
-        },
-        leadingContent = {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_background),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(25.dp)
-                    .clip(CircleShape)
-            )
-        },
-        trailingContent = {
-            Text(text = "00:00")
-        },
-        colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.background
-        )
-    )
-}
-
-@Composable
-private fun ConversasLazycolum(
-    contatos: List<Contatos>,
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(modifier) {
-        contatos.forEach { category ->
-            items(category.items) { text ->
-                ConversaItem(text = text)
-            }
         }
     }
 }

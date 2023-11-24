@@ -19,8 +19,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -159,7 +159,7 @@ class ConfiguracoesActivity : ComponentActivity() {
                 supportingContent = { Text(text = "Teste") },
                 leadingContent = {
                     Icon(
-                        imageVector = Icons.Default.Search,
+                        imageVector = Icons.Default.Android,
                         contentDescription = ""
                     )
                 },
@@ -188,22 +188,23 @@ class ConfiguracoesActivity : ComponentActivity() {
                 supportingContent = { Text(text = "Teste Recado") },
                 leadingContent = {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_background),
+                        painter = painterResource(id = R.drawable.no_picture),
                         contentDescription = null,
                         modifier = Modifier
-                            .size(100.dp)
                             .clip(CircleShape)
+                            .background(Color.Gray)
+                            .size(100.dp)
                     )
                 },
                 trailingContent = {
-                  Icon(imageVector = Icons.Outlined.Android, contentDescription = null)
+                  Icon(painter = painterResource(id = R.drawable.qr_code), contentDescription = null)
                 },
                 colors = ListItemDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
-        LazyColumn(modifier) {
+        LazyColumn {
             configuracoes.forEach { item ->
                 items(item.items) { text ->
                     ConfiguracoesItem(text = text)

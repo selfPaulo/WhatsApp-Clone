@@ -80,7 +80,7 @@ class CameraPermissionTextProvider: PermissionTextProvider {
     }
 }
 
-class ReadExternalStoragePermissionTextProvider: PermissionTextProvider {
+class AccessMediaLocationPermissionTextProvider: PermissionTextProvider {
     override fun getDescription(isPermanentlyDeclined: Boolean): String {
         return if(isPermanentlyDeclined) {
             "Parece que você recusou permanentemente a permissão de armazenamento externo. " +

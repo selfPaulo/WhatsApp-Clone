@@ -167,7 +167,7 @@ class ContatosActivity : ComponentActivity() {
                                     color = MaterialTheme.colorScheme.secondary
                                 )
                             },
-                            supportingContent = { Text(text = "$countContacts contatos") },
+                            supportingContent = { Text(text = "x contatos") },
                         )
                     },
                     colors = TopAppBarColors(
@@ -332,11 +332,12 @@ private fun CategoryItem(
         },
         leadingContent = {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_background),
+                painter = painterResource(id = R.drawable.no_picture),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(25.dp)
                     .clip(CircleShape)
+                    .background(Color.Gray)
+                    .size(50.dp)
             )
         },
         colors = ListItemDefaults.colors(
@@ -344,8 +345,6 @@ private fun CategoryItem(
         )
     )
 }
-
-private var countContacts = 0
 
 @Composable
 private fun CategorizedLazycolum(
@@ -356,7 +355,6 @@ private fun CategorizedLazycolum(
         categories.forEach { category ->
             items(category.items) { text ->
                 CategoryItem(text = text)
-                countContacts += 1
             }
         }
     }
