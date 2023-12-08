@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.whatsapp.R
 
 @Composable
-fun TelaChamadasEmpty() {
+fun TelaChamadas() {
     ListItem(
         headlineContent = {
             Text(

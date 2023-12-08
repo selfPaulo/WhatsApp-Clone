@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material3.TextField
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -139,7 +141,7 @@ class LoginActivity : ComponentActivity() {
                     shape = RoundedCornerShape(25.dp)
                 )
 
-                OutlinedTextField(
+                TextField(
                     value = passwordState.value,
                     onValueChange = { passwordState.value = it },
                     modifier = Modifier.padding(16.dp),
@@ -174,15 +176,18 @@ class LoginActivity : ComponentActivity() {
                     Text(stringResource(R.string.logar), color = Color.Black)
                 }
 
-                TextButton(
+                ClickableText(
+                    text = AnnotatedString(stringResource(R.string.nao_tem_conta)),
+                    modifier = Modifier
+                        .padding(16.dp),
                     onClick = {
                         abrirTelaCadastro()
                     },
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(stringResource(R.string.nao_tem_conta),  color = Color.Black)
-                }
+                    style = TextStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        background = MaterialTheme.colorScheme.background
+                    )
+                )
             }
         }
     }

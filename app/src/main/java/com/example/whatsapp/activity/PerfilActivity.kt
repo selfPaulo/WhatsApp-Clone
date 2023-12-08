@@ -11,17 +11,14 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,12 +31,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.Create
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.filled.RestoreFromTrash
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -83,6 +81,13 @@ import com.example.whatsapp.helper.MainViewModel
 import com.example.whatsapp.helper.PermissionDialog
 import com.example.whatsapp.helper.PhoneCallPermissionTextProvider
 import com.example.whatsapp.helper.RecordAudioPermissionTextProvider
+import com.example.whatsapp.helper.UsuarioFirebase
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.UploadTask
+import java.io.ByteArrayOutputStream
 
 @SuppressLint("QueryPermissionsNeeded")
 fun Activity.openAppSettings() {
@@ -99,6 +104,11 @@ fun Activity.openAppSettings() {
 class PerfilActivity : ComponentActivity() {
 
     private val configuracaoFirebase = ConfiguracaoFirebase()
+    private val storageReference = configuracaoFirebase.getFirebaseStorage()
+    private val usuarioFirebase = UsuarioFirebase()
+    private val idUsuario = UsuarioFirebase().getIdentificadorUsuario()
+    private lateinit var imageRef : StorageReference
+    private lateinit var uploadTask: UploadTask
 
     @RequiresApi(Build.VERSION_CODES.R)
     private val permissionsToRequest = arrayOf(
@@ -125,7 +135,7 @@ class PerfilActivity : ComponentActivity() {
                     }
                 )
 
-                val readExternalStoragePermissionResultLauncher = rememberLauncherForActivityResult(
+                val accessMediaLocationPermissionResultLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
                     onResult = { isGranted ->
                         viewModel.onPermissionResult(
@@ -190,7 +200,7 @@ class PerfilActivity : ComponentActivity() {
                 ) {
                     PerfilScreen(
                         cameraPermissionResultLauncher,
-                        readExternalStoragePermissionResultLauncher
+                        accessMediaLocationPermissionResultLauncher
                     )
                 }
             }
@@ -201,9 +211,13 @@ class PerfilActivity : ComponentActivity() {
         finish()
     }
 
+    private fun atualizarFotoUsuario(uri: Uri) {
+        usuarioFirebase.atualizarFotoUsuario(uri)
+    }
+
     @RequiresApi(Build.VERSION_CODES.R)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UnrememberedMutableState")
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
     @Composable
     fun PerfilScreen(
         cameraPermissionResultLauncher: ManagedActivityResultLauncher<String, Boolean>,
@@ -211,32 +225,33 @@ class PerfilActivity : ComponentActivity() {
     ) {
         var openBottomSheet by rememberSaveable { mutableStateOf(false) }
 
+        val cameraPermission = rememberPermissionState(
+            permission = Manifest.permission.CAMERA
+        )
+
+        val accessMediaLocationPermission = rememberPermissionState(
+            permission = Manifest.permission.ACCESS_MEDIA_LOCATION
+        )
+
+        val usuarioAtual = usuarioFirebase.getUsuarioAtual()
+
         val context = LocalContext.current
-        var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-        var imageUri0 by remember { mutableStateOf<Uri?>(null) }
+        var imagemPerfilAtual by remember { mutableStateOf<Bitmap?>(null) }
+        var imagemPerfilDB by remember { mutableStateOf<Uri?>(null) }
+        if (usuarioAtual != null) {
+            imagemPerfilDB = usuarioAtual.photoUrl
+        }
         val imageCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
             if (result.isSuccessful) {
-                imageUri0 = result.uriContent
+                imagemPerfilDB = result.uriContent
             }
         }
-        if (imageUri0 != null) {
-            bitmap = if (Build.VERSION.SDK_INT < 28) {
-                MediaStore.Images.Media.getBitmap(context.contentResolver, imageUri0)
+        if (imagemPerfilDB != null) {
+            imagemPerfilAtual = if (Build.VERSION.SDK_INT < 28) {
+                MediaStore.Images.Media.getBitmap(context.contentResolver, imagemPerfilDB)
             } else {
-                val source = ImageDecoder.createSource(context.contentResolver, imageUri0!!)
+                val source = ImageDecoder.createSource(context.contentResolver, imagemPerfilDB!!)
                 ImageDecoder.decodeBitmap(source)
-            }
-        }
-
-        var imageUri: Any? by remember { mutableStateOf(R.drawable.no_picture) }
-        val photoPicker = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickVisualMedia()
-        ) {
-            if (it != null) {
-                Log.d("PhotoPicker", "Selected URI: $it")
-                imageUri = it
-            } else {
-                Log.d("PhotoPicker", "No media selected")
             }
         }
 
@@ -271,15 +286,15 @@ class PerfilActivity : ComponentActivity() {
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(top = 64.dp)
+                        .padding(top = 80.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Box {
-                        if (bitmap != null) {
+                        if (imagemPerfilAtual != null) {
                             Image(
-                                bitmap = bitmap?.asImageBitmap()!!,
+                                bitmap = imagemPerfilAtual?.asImageBitmap()!!,
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -287,13 +302,29 @@ class PerfilActivity : ComponentActivity() {
                                     .background(Color.Blue)
                                     .size(200.dp)
                             )
+
+                            val baos = ByteArrayOutputStream()
+                            imagemPerfilAtual!!.compress(Bitmap.CompressFormat.JPEG, 70, baos)
+                            val dadosImagem = baos.toByteArray()
+
+                            imageRef = storageReference
+                                .child("imagens")
+                                .child("perfil")
+                                .child("$idUsuario.jpeg")
+
+                            val uri = imageRef.downloadUrl
+
+                            atualizarFotoUsuario(uri.result)
+
+                            uploadTask = imageRef.putBytes(dadosImagem)
+
                         } else {
                             Image(
                                 painter = painterResource(id = R.drawable.no_picture),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .background(Color.Gray)
+                                    .background(MaterialTheme.colorScheme.onBackground)
                                     .size(200.dp)
                             )
                         }
@@ -305,9 +336,9 @@ class PerfilActivity : ComponentActivity() {
                                 .padding(all = 16.dp)
                                 .align(alignment = Alignment.BottomEnd)
                                 .background(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = CircleShape
-                            )
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = CircleShape
+                                )
                         )
                         {
                             Image(
@@ -318,11 +349,6 @@ class PerfilActivity : ComponentActivity() {
                                     .background(MaterialTheme.colorScheme.primary)
                                     .size(50.dp)
                                     .padding(10.dp)
-                                    .clickable {
-                                        val cropOption =
-                                            CropImageContractOptions(uriContent, CropImageOptions())
-                                        imageCropLauncher.launch(cropOption)
-                                    }
                             )
                         }
                     }
@@ -334,19 +360,28 @@ class PerfilActivity : ComponentActivity() {
                     verticalAlignment = Alignment.Bottom
                 ) {
                     ListItem(
-                        headlineContent = { Text(text = "Nome", color = Color.White) },
-                        supportingContent = { Text(text = "Teste") },
+                        headlineContent = {
+                            Text(
+                                text = "Teste",
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        },
+                        overlineContent = {
+                            Text(text = "Nome")
+                        },
+                        supportingContent = { Text(text = "Esse não é seu nome de usuário nem seu PIN. Esse nome será exibido para seus contatos do WhatsApp") },
                         leadingContent = {
                             Icon(
                                 imageVector = Icons.Default.Person,
-                                contentDescription = null
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary
                             )
                         },
                         trailingContent = {
                             Icon(
-                                imageVector = Icons.Outlined.Create,
+                                imageVector = Icons.Filled.Create,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         },
                         colors = ListItemDefaults.colors(
@@ -361,19 +396,20 @@ class PerfilActivity : ComponentActivity() {
                     verticalAlignment = Alignment.Bottom
                 ) {
                     ListItem(
-                        headlineContent = { Text(text = "Recado", color = Color.White) },
-                        supportingContent = { Text(text = "Teste") },
+                        headlineContent = { Text(text = "Teste", color = Color.White) },
+                        overlineContent = { Text(text = "Recado") },
                         leadingContent = {
                             Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = null
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary
                             )
                         },
                         trailingContent = {
                             Icon(
-                                imageVector = Icons.Outlined.Create,
+                                imageVector = Icons.Filled.Create,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         },
                         colors = ListItemDefaults.colors(
@@ -388,12 +424,13 @@ class PerfilActivity : ComponentActivity() {
                     verticalAlignment = Alignment.Bottom
                 ) {
                     ListItem(
-                        headlineContent = { Text(text = "Email", color = Color.White) },
-                        supportingContent = { Text(text = configuracaoFirebase.getFirebaseAutenticacao().currentUser?.email.toString()) },
+                        headlineContent = { Text(text = configuracaoFirebase.getFirebaseAutenticacao().currentUser?.email.toString(), color = Color.White) },
+                        overlineContent = { Text(text = "Email", color = Color.White) },
                         leadingContent = {
                             Icon(
                                 imageVector = Icons.Default.Call,
-                                contentDescription = null
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary
                             )
                         },
                         colors = ListItemDefaults.colors(
@@ -413,10 +450,21 @@ class PerfilActivity : ComponentActivity() {
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    Text(
-                        "Foto do perfil",
-                        color = Color.White,
-                        fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                "Foto do perfil",
+                                color = Color.White,
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            )
+                        },
+                        trailingContent = {
+                            Icon(
+                                imageVector = Icons.Filled.RestoreFromTrash,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
                     )
                     Row(
                         modifier = Modifier
@@ -427,14 +475,20 @@ class PerfilActivity : ComponentActivity() {
                             modifier = Modifier.padding(end = 25.dp)
                         ) {
                             IconButton(onClick = {
-                                cameraPermissionResultLauncher.launch(
-                                    Manifest.permission.CAMERA
-                                )
+                                if (cameraPermission.status.isGranted) {
+                                    val cropOption =
+                                        CropImageContractOptions(uriContent, CropImageOptions())
+                                    imageCropLauncher.launch(cropOption)
+                                } else {
+                                    cameraPermissionResultLauncher.launch(
+                                        Manifest.permission.CAMERA
+                                    )
+                                }
                             }) {
                                 Icon(
-                                    imageVector = Icons.Outlined.CameraAlt,
+                                    imageVector = Icons.Filled.CameraAlt,
                                     contentDescription = null,
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                             Text(
@@ -447,19 +501,20 @@ class PerfilActivity : ComponentActivity() {
                             modifier = Modifier.padding(end = 25.dp)
                         ) {
                             IconButton(onClick = {
-                                photoPicker.launch(
-                                    PickVisualMediaRequest(
-                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                if (accessMediaLocationPermission.status.isGranted) {
+                                    val cropOption =
+                                        CropImageContractOptions(uriContent, CropImageOptions())
+                                    imageCropLauncher.launch(cropOption)
+                                } else {
+                                    accessMediaLocationPermissionResultLauncher.launch(
+                                        Manifest.permission.ACCESS_MEDIA_LOCATION
                                     )
-                                )
-//                                accessMediaLocationPermissionResultLauncher.launch(
-//                                    Manifest.permission.ACCESS_MEDIA_LOCATION
-//                                )
+                                }
                             }) {
                                 Icon(
-                                    imageVector = Icons.Outlined.Image,
+                                    imageVector = Icons.Filled.Image,
                                     contentDescription = null,
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                             Text(
@@ -471,9 +526,9 @@ class PerfilActivity : ComponentActivity() {
                         Column {
                             IconButton(onClick = { /*TODO*/ }) {
                                 Icon(
-                                    imageVector = Icons.Outlined.Person,
+                                    imageVector = Icons.Filled.Face,
                                     contentDescription = null,
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                             Text(

@@ -98,7 +98,7 @@ fun TelaAtualizacoes() {
                         contentDescription = null,
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(Color.Gray)
+                            .background(MaterialTheme.colorScheme.onBackground)
                             .size(50.dp)
                     )
                     Image(

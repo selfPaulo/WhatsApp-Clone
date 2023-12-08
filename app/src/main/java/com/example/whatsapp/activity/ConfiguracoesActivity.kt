@@ -15,11 +15,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.AddAlert
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PanoramaFishEye
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,17 +53,30 @@ import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 
 class ConfiguracoesActivity : ComponentActivity() {
 
-    private val titulosConfiguracoesString = listOf(
-        "Conta", "Privacidade", "Avatar",
-        "Conversas", "Notificações", "Armazenamento e dados",
-        "Idioma do aplicativo", "Ajuda", "Convidar amigos"
-    ).groupBy { it.chars() }
+    @Composable
+    fun createListConfiguracoes(): ArrayList<ConfiguracoesItem> {
+        val configuracoes = ArrayList<ConfiguracoesItem>()
 
-    private val titulosConfiguracoes = titulosConfiguracoesString.map {
-        Configuracoes(
-            name = it.key.toString(),
-            items = it.value
-        )
+        val item1 = ConfiguracoesItem("Conta", "Notificações de segurança, mudança de número", Icons.Default.Key)
+        val item2 = ConfiguracoesItem("Privacidade", "Bloqueio de contatos, mensagens temporárias", Icons.Default.Lock)
+        val item3 = ConfiguracoesItem("Avatar", "Criar, editar, foto do perfil", Icons.Default.Face)
+        val item4 = ConfiguracoesItem("Conversas", "Tema, Papel de parede, histórico de conversas", Icons.Filled.Chat)
+        val item5 = ConfiguracoesItem("Notificações", "Mensagens, grupos, chamadas", Icons.Default.AddAlert)
+        val item6 = ConfiguracoesItem("Armazenamento e Dados", "Uso de rede, dowload automático", Icons.Default.PanoramaFishEye)
+        val item7 = ConfiguracoesItem("Idioma do app", "Português (Brasil) (idioma do aparelho)", Icons.Default.Circle)
+        val item8 = ConfiguracoesItem("Ajuda", "Central de ajuda, fale conosco, política de privacidade", Icons.Default.Help)
+        val item9 = ConfiguracoesItem("Convidar Amigos", "", Icons.Default.People)
+
+        configuracoes.add(item1)
+        configuracoes.add(item2)
+        configuracoes.add(item3)
+        configuracoes.add(item4)
+        configuracoes.add(item5)
+        configuracoes.add(item6)
+        configuracoes.add(item7)
+        configuracoes.add(item8)
+        configuracoes.add(item9)
+        return configuracoes
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,9 +138,7 @@ class ConfiguracoesActivity : ComponentActivity() {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                ConfiguracoesLazycolum(
-                    configuracoes = titulosConfiguracoes
-                )
+                ConfiguracoesLazycolum()
             }
         }
     }
@@ -142,25 +161,37 @@ class ConfiguracoesActivity : ComponentActivity() {
         }
     }
 
-    data class Configuracoes(
+    data class ConfiguracoesItem(
         val name: String,
-        val items: List<String>
+        val description: String,
+        val icon: ImageVector
     )
 
     @Composable
     private fun ConfiguracoesItem(
-        text: String,
+        configuracoesItem: ConfiguracoesItem,
         modifier: Modifier = Modifier
     ) {
         Column {
             ListItem(
                 modifier = modifier,
-                headlineContent = { Text(text = text, color = Color.White) },
-                supportingContent = { Text(text = "Teste") },
+                headlineContent = {
+                    Text(
+                        text = configuracoesItem.name,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = configuracoesItem.description,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                },
                 leadingContent = {
                     Icon(
-                        imageVector = Icons.Default.Android,
-                        contentDescription = ""
+                        imageVector = configuracoesItem.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary
                     )
                 },
                 colors = ListItemDefaults.colors(
@@ -172,7 +203,6 @@ class ConfiguracoesActivity : ComponentActivity() {
 
     @Composable
     private fun ConfiguracoesLazycolum(
-        configuracoes: List<Configuracoes>,
         modifier: Modifier = Modifier
     ) {
         Box (
@@ -192,23 +222,26 @@ class ConfiguracoesActivity : ComponentActivity() {
                         contentDescription = null,
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(Color.Gray)
+                            .background(MaterialTheme.colorScheme.onBackground)
                             .size(100.dp)
                     )
                 },
                 trailingContent = {
-                  Icon(painter = painterResource(id = R.drawable.qr_code), contentDescription = null)
+                  Icon(
+                      painter = painterResource(id = R.drawable.qr_code),
+                      contentDescription = null,
+                      tint = MaterialTheme.colorScheme.primary
+                  )
                 },
                 colors = ListItemDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
+        val getConfigList = createListConfiguracoes()
         LazyColumn {
-            configuracoes.forEach { item ->
-                items(item.items) { text ->
-                    ConfiguracoesItem(text = text)
-                }
+            items(getConfigList.size) { item ->
+                ConfiguracoesItem(configuracoesItem = getConfigList[item])
             }
         }
     }

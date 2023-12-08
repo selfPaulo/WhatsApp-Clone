@@ -32,12 +32,14 @@ import androidx.compose.ui.unit.dp
 import com.example.whatsapp.R
 import com.example.whatsapp.activity.ui.theme.WhatsAppTheme
 import com.example.whatsapp.helper.Base64Custom
+import com.example.whatsapp.helper.UsuarioFirebase
 
 class CadastroActivity : ComponentActivity() {
 
     private val configuracaoFirebase = ConfiguracaoFirebase()
     private var autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
     private val base64Custom = Base64Custom()
+    private val usuarioFirebase = UsuarioFirebase()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,13 +70,14 @@ class CadastroActivity : ComponentActivity() {
 
         fun cadastrarUsuario(usuario: Usuario) {
             autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
-            usuario.email?.let {
-                usuario.senha?.let { it1 ->
+            usuario.email?.let {email ->
+                usuario.senha?.let { senha ->
                     autenticacao.createUserWithEmailAndPassword(
-                        it, it1
+                        email, senha
                     ).addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
                             Toast.makeText(this, "Sucesso ao cadastrar usuário!", Toast.LENGTH_SHORT).show()
+                            usuario.nome?.let { nome -> usuarioFirebase.atualizarNomeUsario(nome) }
                             finish()
                             try {
                                 val identificadorUsuario = base64Custom.codificarBase64(usuario.email!!)
@@ -176,7 +179,7 @@ class CadastroActivity : ComponentActivity() {
                     shape = RoundedCornerShape(25.dp)
                 )
 
-                OutlinedTextField(
+                TextField(
                     value = passwordState.value,
                     onValueChange = { passwordState.value = it },
                     modifier = Modifier.padding(16.dp),

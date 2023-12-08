@@ -35,9 +35,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.outlined.AddIcCall
+import androidx.compose.material.icons.filled.AddIcCall
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.Chat
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.LaunchedEffect
@@ -83,7 +86,10 @@ class MainActivity : ComponentActivity() {
             mutableIntStateOf(0)
         }
         var currentIcon by remember {
-            mutableStateOf(Icons.Outlined.Chat)
+            mutableStateOf(Icons.Filled.Chat)
+        }
+        var fabCreate by remember {
+            mutableStateOf(false)
         }
         Scaffold(
             topBar = {
@@ -248,7 +254,7 @@ class MainActivity : ComponentActivity() {
                 TabRow(selectedTabIndex = selectedTabIndex) {
                     tabItens.forEachIndexed { index, item ->
                         colorSelected = if (item.index == selectedTabIndex) {
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.tertiary
                         }
@@ -268,36 +274,46 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                ) { index ->
+                ) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        when (index) {
+                        when (selectedTabIndex) {
                             0 -> {
                                 TelaConversas()
+                                currentActionButton = 0
+                                currentIcon = Icons.Filled.Chat
+                                fabCreate = false
                             }
                             1 -> {
                                 TelaAtualizacoes()
+                                currentActionButton = 1
+                                currentIcon = Icons.Filled.CameraAlt
+                                fabCreate = true
                             }
                             else -> {
-                                TelaChamadasEmpty()
+                                TelaChamadas()
+                                currentActionButton = 2
+                                currentIcon = Icons.Filled.AddIcCall
+                                fabCreate = false
                             }
-                        }
-                        when (index) {
-                            0 -> currentActionButton = 0
-                            1 -> currentActionButton = 1
-                            2 -> currentActionButton = 2
-                        }
-                        when (index) {
-                            0 -> currentIcon = Icons.Outlined.Chat
-                            1 -> currentIcon = Icons.Outlined.CameraAlt
-                            2 -> currentIcon = Icons.Outlined.AddIcCall
                         }
                     }
                 }
             }
         }
         Box(modifier = Modifier.fillMaxSize()) {
+            if (fabCreate) {
+                SmallFloatingActionButton(
+                    onClick = { /* do something */ },
+                    modifier = Modifier
+                        .padding(end = 22.dp, bottom = 75.dp)
+                        .align(alignment = Alignment.BottomEnd),
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                ) {
+                    Icon(Icons.Filled.Create, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                }
+            }
             FloatingActionButton(
                 onClick = {
                     when (currentActionButton) {
@@ -332,6 +348,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun abrirTelaLogin() {
+        Intent(this, LoginActivity::class.java).also {
+            startActivity(it)
+        }
+    }
+
     private fun deslogarUsuario() {
         try {
             autenticacao.signOut()
@@ -345,12 +367,6 @@ class MainActivity : ComponentActivity() {
         val usuarioAtual = autenticacao.currentUser
         if (usuarioAtual == null) {
             abrirTelaLogin()
-        }
-    }
-
-    private fun abrirTelaLogin() {
-        Intent(this, LoginActivity::class.java).also {
-            startActivity(it)
         }
     }
 
