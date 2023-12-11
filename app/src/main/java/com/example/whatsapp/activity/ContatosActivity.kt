@@ -50,6 +50,7 @@ import com.example.whatsapp.R
 
 class ContatosActivity : ComponentActivity() {
 
+    /*
     private val names = listOf(
         "Ana",
         "André",
@@ -129,14 +130,15 @@ class ContatosActivity : ComponentActivity() {
         "Zélio",
         "Zuleide",
         "Zara"
-    ).groupBy { it.first() }.toSortedMap()
+    ).groupBy { it.first() }.toSortedMap()    
 
     private val namesList = names.map {
-        Category(
+        Contato(
             name = it.key.toString(),
             items = it.value
         )
-    }
+    } 
+    */
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -265,8 +267,8 @@ class ContatosActivity : ComponentActivity() {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                CategorizedLazycolum(
-                    categories = namesList
+                ContatosLazycolum(
+                    contatos = null
                 )
             }
         }
@@ -286,13 +288,13 @@ class ContatosActivity : ComponentActivity() {
 
 }
 
-data class Category(
+data class Contato(
     val name: String,
     val items: List<String>
 )
 
 //@Composable
-//private fun CategoryHeader(
+//private fun ContatoHeader(
 //    text: String,
 //    modifier: Modifier = Modifier
 //) {
@@ -309,7 +311,7 @@ data class Category(
 //}
 
 @Composable
-private fun CategoryItem(
+private fun ContatoItem(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -347,14 +349,37 @@ private fun CategoryItem(
 }
 
 @Composable
-private fun CategorizedLazycolum(
-    categories: List<Category>,
+private fun ContatosLazycolum(
+    contatos: List<Contato>,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(modifier) {
-        categories.forEach { category ->
-            items(category.items) { text ->
-                CategoryItem(text = text)
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = "Novo Contato",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            },
+            leadingContent = {
+                Image(
+                    painter = painterResource(id = R.drawable.link),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .size(50.dp)
+                )
+            },
+            colors = ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.background
+            )
+        )
+        contatos.forEach { contato ->
+            items(contato.items) { text ->
+                ContatoItem(text = text)
             }
         }
     }

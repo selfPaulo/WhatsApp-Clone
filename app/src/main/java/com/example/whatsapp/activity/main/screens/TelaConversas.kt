@@ -1,4 +1,4 @@
-package com.example.whatsapp.activity
+package com.example.whatsapp.activity.main.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.whatsapp.R
 
-data class Contatos(
+/*data class Contatos(
     val name: String,
     val items: List<String>
 )
@@ -36,6 +36,9 @@ var contatosList = contatos.map {
         items = it.value
     )
 }
+*/
+
+val contatos = null
 
 @Composable
 fun ConversaItem(
@@ -93,6 +96,32 @@ fun ConversasLazycolum(
 }
 
 @Composable
-fun TelaConversas() {
-    ConversasLazycolum(contatos = contatosList)
+fun ConversasEmpty() {
+        Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Para iniciar conversa com seus contatos que usam o WhatsApp, toque em "
+                    +
+                    Image(
+                        imageVector = Icons.Default.Chat,
+                        modifier = Modifier.size(25.dp),
+                        contentDescription = null
+                    )
+                    +
+                    " no fina da tela",
+            modifier = Modifier.padding(25.dp, 25.dp),
+            color = MaterialTheme.colorScheme.tertiary
+        )
+    }
+}
+
+@Composable
+fun TelaConversas(navController: NavController) {
+    if (contatos != null) {
+        ConversasLazycolum(contatos = contatosList)
+    } else {
+        ConversasEmpty()
+    }
 }

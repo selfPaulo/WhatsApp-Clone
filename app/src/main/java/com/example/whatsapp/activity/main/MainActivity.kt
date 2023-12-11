@@ -59,11 +59,6 @@ class MainActivity : ComponentActivity() {
     private val configuracaoFirebase = ConfiguracaoFirebase()
     private var autenticacao = configuracaoFirebase.getFirebaseAutenticacao()
 
-    data class TabItem(
-        val title: String,
-        val index: Int
-    )
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -82,15 +77,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     @Composable
     fun MainScreen() {
-        var currentActionButton by remember {
-            mutableIntStateOf(0)
-        }
-        var currentIcon by remember {
-            mutableStateOf(Icons.Filled.Chat)
-        }
-        var fabCreate by remember {
-            mutableStateOf(false)
-        }
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -217,133 +203,18 @@ class MainActivity : ComponentActivity() {
                 )
             }
         ) {
-            val tabItens = listOf(
-                TabItem(
-                    title = "Conversas",
-                    index = 0
-                ),
-                TabItem(
-                    title = "Atualizações",
-                    index = 1
-                ),
-                TabItem(
-                    title = "Chamadas",
-                    index = 2
-                )
-            )
-            var selectedTabIndex by remember {
-                mutableIntStateOf(0)
-            }
-            val pagerState = rememberPagerState {
-                tabItens.size
-            }
-            var colorSelected: Color
-            LaunchedEffect(selectedTabIndex) {
-                pagerState.animateScrollToPage(selectedTabIndex)
-            }
-            LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
-                if (!pagerState.isScrollInProgress) {
-                    selectedTabIndex = pagerState.currentPage
-                }
-            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 64.dp)
             ) {
-                TabRow(selectedTabIndex = selectedTabIndex) {
-                    tabItens.forEachIndexed { index, item ->
-                        colorSelected = if (item.index == selectedTabIndex) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.tertiary
-                        }
-                        Tab(
-                            selected = index == selectedTabIndex,
-                            onClick = {
-                                selectedTabIndex = index
-                            },
-                            text = {
-                                Text(text = item.title, color = colorSelected)
-                            }
-                        )
-                    }
-                }
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        when (selectedTabIndex) {
-                            0 -> {
-                                TelaConversas()
-                                currentActionButton = 0
-                                currentIcon = Icons.Filled.Chat
-                                fabCreate = false
-                            }
-                            1 -> {
-                                TelaAtualizacoes()
-                                currentActionButton = 1
-                                currentIcon = Icons.Filled.CameraAlt
-                                fabCreate = true
-                            }
-                            else -> {
-                                TelaChamadas()
-                                currentActionButton = 2
-                                currentIcon = Icons.Filled.AddIcCall
-                                fabCreate = false
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (fabCreate) {
-                SmallFloatingActionButton(
-                    onClick = { /* do something */ },
-                    modifier = Modifier
-                        .padding(end = 22.dp, bottom = 75.dp)
-                        .align(alignment = Alignment.BottomEnd),
-                    containerColor = MaterialTheme.colorScheme.tertiary
-                ) {
-                    Icon(Icons.Filled.Create, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
-                }
-            }
-            FloatingActionButton(
-                onClick = {
-                    when (currentActionButton) {
-                        0 -> abrirTelaContatos()
-                        1 -> abrirTelaContatos()
-                        2 -> abrirTelaContatos()
-                    }
-                },
-                modifier = Modifier
-                    .padding(all = 16.dp)
-                    .align(alignment = Alignment.BottomEnd),
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    currentIcon,
-                    contentDescription = "Nova Conversa / Camêra / Nova Ligação",
-                    tint = Color.Black
-                )
+                BottomNavigationBar()
             }
         }
     }
 
     private fun abrirTelaConfiguracoes() {
         Intent(this, ConfiguracoesActivity::class.java).also {
-            startActivity(it)
-        }
-    }
-
-    private fun abrirTelaContatos() {
-        Intent(this, ContatosActivity::class.java).also {
             startActivity(it)
         }
     }

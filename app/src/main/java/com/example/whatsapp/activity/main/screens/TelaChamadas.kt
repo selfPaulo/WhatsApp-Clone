@@ -1,4 +1,4 @@
-package com.example.whatsapp.activity
+package com.example.whatsapp.activity.main.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.whatsapp.R
 
 @Composable
-fun TelaChamadas() {
+fun TelaChamadas(navController: NavController) {
     ListItem(
         headlineContent = {
             Text(

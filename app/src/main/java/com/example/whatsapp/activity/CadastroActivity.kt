@@ -150,7 +150,9 @@ class CadastroActivity : ComponentActivity() {
                 TextField(
                     value = usernameState.value,
                     onValueChange = { usernameState.value = it },
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .textTransform(TextTransform.Capitalize),
                     textStyle = TextStyle(color = MaterialTheme.colorScheme.secondary),
                     label = { Text(stringResource(R.string.digite_seu_nome)) },
                     isError = false,
